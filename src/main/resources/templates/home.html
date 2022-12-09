@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <title>Getting Started: Serving Web Content</title>
+</head>
+
+<body>
+  <div>
+    <label for="userID">User ID:</label>
+    <input type="text" name="userID" id="userID" />
+  </div>
+  <div>
+    <label for="userSecret">User Secret:</label>
+    <input type="password" name="userSecret" id="userSecret" />
+  </div>
+  <div>
+    <button onclick="connect()" id="connectBtn" style="display: block;">Connect</button>
+    <button onclick="disconnect()" id="disconnectBtn" style="display: none;">Disconnect</button>
+  </div>
+  <script>
+    function getCookie(key) {
+      let name = key + "=";
+      let decodedCookie = decodeURIComponent(document.cookie);
+      let cookies = decodedCookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        let cookie = cookies[i];
+        while (cookie.charAt(0) == ' ') {
+          cookie = cookie.substring(1);
+        }
+        if (cookie.indexOf(name) == 0) {
+          return cookie.substring(name.length, cookie.length);
+        }
+      }
+      return "";
+    }
+
+    function connected() {
+      document.getElementById("connectBtn").style.display = "none";
+      document.getElementById("disconnectBtn").style.display = "block";
+    }
+
+    function disconnected() {
+      document.getElementById("connectBtn").style.display = "block";
+      document.getElementById("disconnectBtn").style.display = "none";
+    }
+
+    function checkConnection(sessionId) {
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", 'http://localhost:8080/session', true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+      xhr.send('sessionId=' + sessionId);
+      xhr.onload = function () {
+        if (this.responseText == "true") {
+          connected();
+        } else {
+          disconnected();
+        }
+      }
+    }
+
+    function connect() {
+      let xhr = new XMLHttpRequest();
+      xhr.open("POST", 'http://localhost:8080/authenticate', true);
+      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+      xhr.send('userID=' + document.getElementById("userID").value + '&userSecret=' + document.getElementById("userSecret").value);
+      xhr.onload = function() {
+        if (this.responseText == 0) {
+          alert('Invalid credentials!');
+        } else if (this.responseText == -1) {
+          alert('No connection');
+        } else {
+          document.cookie = "sessionId=" + this.responseText;
+          connected();
+        }
+      }
+    }
+
+    function disconnect() {
+
+    }
+
+    function onLoad() {
+      let sessionId = getCookie("sessionId");
+      if (sessionId.length > 0) {
+        checkConnection(sessionId);
+      } else {
+        disconnected();
+      }
+    }
+    window.onload = onLoad;
+  </script>
+</body>
+
+</html>
